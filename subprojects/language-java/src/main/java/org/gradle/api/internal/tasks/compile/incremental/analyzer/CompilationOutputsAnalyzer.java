@@ -18,29 +18,31 @@ package org.gradle.api.internal.tasks.compile.incremental.analyzer;
 
 import org.gradle.api.file.FileVisitDetails;
 import org.gradle.api.file.FileVisitor;
+import org.gradle.api.internal.tasks.compile.incremental.annotation.AnnotationProcessingResult;
 import org.gradle.api.internal.tasks.compile.incremental.deps.ClassAnalysis;
 import org.gradle.api.internal.tasks.compile.incremental.deps.ClassDependentsAccumulator;
 import org.gradle.api.internal.tasks.compile.incremental.deps.ClassSetAnalysisData;
 import org.gradle.internal.hash.FileHasher;
 import org.gradle.internal.hash.HashCode;
 
-public class ClassFilesAnalyzer implements FileVisitor {
+public class CompilationOutputsAnalyzer implements FileVisitor {
     private final ClassDependenciesAnalyzer analyzer;
     private final ClassDependentsAccumulator accumulator;
     private final FileHasher hasher;
 
-    public ClassFilesAnalyzer(ClassDependenciesAnalyzer analyzer, FileHasher fileHasher) {
+    public CompilationOutputsAnalyzer(ClassDependenciesAnalyzer analyzer, FileHasher fileHasher) {
         this(analyzer, fileHasher, new ClassDependentsAccumulator());
     }
 
-   ClassFilesAnalyzer(ClassDependenciesAnalyzer analyzer, FileHasher fileHasher, ClassDependentsAccumulator accumulator) {
-       this.analyzer = analyzer;
-       this.hasher = fileHasher;
-       this.accumulator = accumulator;
-   }
+    CompilationOutputsAnalyzer(ClassDependenciesAnalyzer analyzer, FileHasher fileHasher, ClassDependentsAccumulator accumulator) {
+        this.analyzer = analyzer;
+        this.hasher = fileHasher;
+        this.accumulator = accumulator;
+    }
 
     @Override
-    public void visitDir(FileVisitDetails dirDetails) {}
+    public void visitDir(FileVisitDetails dirDetails) {
+    }
 
     @Override
     public void visitFile(FileVisitDetails fileDetails) {
@@ -56,5 +58,9 @@ public class ClassFilesAnalyzer implements FileVisitor {
 
     public ClassSetAnalysisData getAnalysis() {
         return accumulator.getAnalysis();
+    }
+
+    public void visit(AnnotationProcessingResult annotationProcessingResult) {
+        accumulator.addDerivedTypes(annotationProcessingResult);
     }
 }

@@ -23,4 +23,6 @@ package org.gradle.cache.internal;
  */
 public interface Stash<T> {
     void put(T object);
+
+    void remove();
 }

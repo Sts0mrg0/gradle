@@ -16,9 +16,11 @@
 
 package org.gradle.workers.internal;
 
+import org.gradle.api.tasks.WorkResult;
 import org.gradle.internal.reflect.Instantiator;
 
 import javax.inject.Inject;
+import java.util.concurrent.Callable;
 
 public class DefaultWorkerServer implements WorkerProtocol<ActionExecutionSpec> {
     private final Instantiator instantiator;
@@ -31,10 +33,23 @@ public class DefaultWorkerServer implements WorkerProtocol<ActionExecutionSpec> 
     @Override
     public DefaultWorkResult execute(ActionExecutionSpec spec) {
         try {
-            Class<? extends Runnable> implementationClass = spec.getImplementationClass();
-            Runnable runnable = instantiator.newInstance(implementationClass, spec.getParams(implementationClass.getClassLoader()));
-            runnable.run();
-            return new DefaultWorkResult(true, null);
+            Class<?> implementationClass = spec.getImplementationClass();
+            Object action = instantiator.newInstance(implementationClass, spec.getParams(implementationClass.getClassLoader()));
+            if (action instanceof Runnable) {
+                ((Runnable) action).run();
+                return new DefaultWorkResult(true, null);
+            }
+            if (action instanceof Callable) {
+                Object result = ((Callable) action).call();
+                if (result instanceof DefaultWorkResult) {
+                    return (DefaultWorkResult) result;
+                }
+                if (result instanceof WorkResult) {
+                    return new DefaultWorkResult(((WorkResult) result).getDidWork(), null);
+                }
+                throw new IllegalStateException("If a worker action implements the Callable interface, it needs to return a WorkResult");
+            }
+            throw new IllegalStateException("Worker actions need to implement either Runnable or Callable<WorkResult>");
         } catch (Throwable t) {
             return new DefaultWorkResult(true, t);
         }

@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import org.gradle.api.internal.tasks.compile.incremental.annotation.AnnotationProcessingResult;
 
 import java.io.File;
 import java.util.Collections;
@@ -100,7 +101,23 @@ public class ClassDependentsAccumulator {
         return classesToConstants;
     }
 
-    public ClassSetAnalysisData getAnalysis() {
-        return new ClassSetAnalysisData(filePathToClassName, getDependentsMap(), getClassesToConstants(), parentToChildren);
+    public void addDerivedTypes(AnnotationProcessingResult annotationProcessingResult) {
+        for (Map.Entry<String, Set<String>> entry : annotationProcessingResult.getDerivedTypes().entrySet()) {
+            Set<String> dependents = rememberClass(entry.getKey());
+            dependents.addAll(entry.getValue());
+        }
     }
+
+    public ClassSetAnalysisData getAnalysis() {
+        return new ClassSetAnalysisData(filePathToClassName, getDependentsMap(), getClassesToConstants(), asMap(parentToChildren));
+    }
+
+    private static <K, V> Map<K, Set<V>> asMap(Multimap<K, V> multimap) {
+        ImmutableMap.Builder<K, Set<V>> builder = ImmutableMap.builder();
+        for (K key : multimap.keySet()) {
+            builder.put(key, ImmutableSet.copyOf(multimap.get(key)));
+        }
+        return builder.build();
+    }
+
 }

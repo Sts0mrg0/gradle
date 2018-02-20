@@ -53,7 +53,7 @@ public enum IncrementalAnnotationProcessorType {
     /**
      * A processor whose generated files have exactly one originating element.
      */
-    SINGLE_ORIGIN(false),
+    SINGLE_ORIGIN(true),
     /**
      * A processor whose generated files can have more than one originating element.
      */

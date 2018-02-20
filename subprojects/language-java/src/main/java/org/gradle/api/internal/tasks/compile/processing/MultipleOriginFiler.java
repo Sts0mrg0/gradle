@@ -16,6 +16,8 @@
 
 package org.gradle.api.internal.tasks.compile.processing;
 
+import org.gradle.api.internal.tasks.compile.incremental.annotation.AnnotationProcessingResult;
+
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.Messager;
 import javax.lang.model.element.Element;
@@ -26,8 +28,8 @@ import javax.tools.Diagnostic;
  */
 class MultipleOriginFiler extends IncrementalFiler {
 
-    MultipleOriginFiler(Filer delegate, Messager messager) {
-        super(delegate, messager);
+    MultipleOriginFiler(Filer delegate, AnnotationProcessingResult result, Messager messager) {
+        super(delegate, result, messager);
     }
 
     protected void checkOriginatingElements(CharSequence name, Element[] originatingElements, Messager messager) {

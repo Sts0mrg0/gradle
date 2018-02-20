@@ -21,11 +21,13 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import org.gradle.api.internal.file.FileOperations;
 import org.gradle.api.internal.tasks.compile.JavaCompileSpec;
+import org.gradle.api.internal.tasks.compile.JdkJavaCompilerResult;
 import org.gradle.api.internal.tasks.compile.incremental.analyzer.ClassDependenciesAnalyzer;
-import org.gradle.api.internal.tasks.compile.incremental.analyzer.ClassFilesAnalyzer;
+import org.gradle.api.internal.tasks.compile.incremental.analyzer.CompilationOutputsAnalyzer;
 import org.gradle.api.internal.tasks.compile.incremental.deps.ClassSetAnalysisData;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
+import org.gradle.api.tasks.WorkResult;
 import org.gradle.cache.internal.Stash;
 import org.gradle.internal.hash.FileHasher;
 import org.gradle.internal.time.Time;
@@ -49,19 +51,31 @@ public class ClassSetAnalysisUpdater {
     private ClassDependenciesAnalyzer analyzer;
     private final FileHasher fileHasher;
 
-    public ClassSetAnalysisUpdater(Stash<ClassSetAnalysisData> stash, FileOperations fileOperations, ClassDependenciesAnalyzer analyzer, FileHasher fileHasher) {
+    ClassSetAnalysisUpdater(Stash<ClassSetAnalysisData> stash, FileOperations fileOperations, ClassDependenciesAnalyzer analyzer, FileHasher fileHasher) {
         this.stash = stash;
         this.fileOperations = fileOperations;
         this.analyzer = analyzer;
         this.fileHasher = fileHasher;
     }
 
-    public void updateAnalysis(JavaCompileSpec spec) {
+    public void updateAnalysis(JavaCompileSpec spec, WorkResult result) {
+        if (result instanceof RecompilationNotNecessary) {
+            return;
+        }
         Timer clock = Time.startTimer();
+        CompilationOutputsAnalyzer analyzer = new CompilationOutputsAnalyzer(this.analyzer, fileHasher);
+        if (!spec.getEffectiveAnnotationProcessors().isEmpty()) {
+            if (result instanceof JdkJavaCompilerResult) {
+                analyzer.visit(((JdkJavaCompilerResult) result).getAnnotationProcessingResult());
+            } else {
+                LOG.info("The chosen compiler does not support incremental annotation processing. The next compilation will be a full recompile.");
+                stash.remove();
+                return;
+            }
+        }
         Set<File> baseDirs = Sets.newLinkedHashSet();
         baseDirs.add(spec.getDestinationDir());
         Iterables.addAll(baseDirs, Iterables.filter(spec.getCompileClasspath(), IS_CLASS_DIRECTORY));
-        ClassFilesAnalyzer analyzer = new ClassFilesAnalyzer(this.analyzer, fileHasher);
         for (File baseDir : baseDirs) {
             fileOperations.fileTree(baseDir).visit(analyzer);
         }

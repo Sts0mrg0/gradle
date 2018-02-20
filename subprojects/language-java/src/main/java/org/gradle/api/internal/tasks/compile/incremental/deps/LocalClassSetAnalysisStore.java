@@ -36,6 +36,11 @@ public class LocalClassSetAnalysisStore implements Loader<ClassSetAnalysisData>,
     }
 
     @Override
+    public void remove() {
+        cache.remove(taskPath);
+    }
+
+    @Override
     public ClassSetAnalysisData get() {
         return cache.get(taskPath);
     }

@@ -336,7 +336,7 @@ subprojects { prj ->
 }
 
 afterEvaluate {
-    rootProject.availableJavaInstallations.validateBuildCacheConfiguration(gradle.settings.buildCache)
+//    rootProject.availableJavaInstallations.validateBuildCacheConfiguration(gradle.settings.buildCache)
 }
 
 apply from: "gradle/ciReporting.gradle"

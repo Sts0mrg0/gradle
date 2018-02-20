@@ -30,6 +30,7 @@ import org.gradle.workers.internal.WorkerFactory;
 import javax.inject.Inject;
 import java.io.File;
 import java.util.Set;
+import java.util.concurrent.Callable;
 
 import static org.gradle.process.internal.util.MergeOptionsUtil.mergeHeapSize;
 import static org.gradle.process.internal.util.MergeOptionsUtil.normalized;
@@ -72,7 +73,7 @@ public abstract class AbstractDaemonCompiler<T extends CompileSpec> implements C
         return merged;
     }
 
-    private static class CompilerRunnable<T extends CompileSpec> implements Runnable {
+    private static class CompilerRunnable<T extends CompileSpec> implements Callable<WorkResult> {
         private final Compiler<T> compiler;
         private final T compileSpec;
 
@@ -83,8 +84,8 @@ public abstract class AbstractDaemonCompiler<T extends CompileSpec> implements C
         }
 
         @Override
-        public void run() {
-            compiler.execute(compileSpec);
+        public WorkResult call() {
+            return compiler.execute(compileSpec);
         }
     }
 

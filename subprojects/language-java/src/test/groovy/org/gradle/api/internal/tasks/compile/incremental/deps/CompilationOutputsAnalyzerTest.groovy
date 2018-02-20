@@ -18,21 +18,21 @@
 
 package org.gradle.api.internal.tasks.compile.incremental.deps
 
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import org.gradle.api.file.FileVisitDetails
 import org.gradle.api.internal.tasks.compile.incremental.analyzer.ClassDependenciesAnalyzer
-import org.gradle.api.internal.tasks.compile.incremental.analyzer.ClassFilesAnalyzer
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet
+import org.gradle.api.internal.tasks.compile.incremental.analyzer.CompilationOutputsAnalyzer
 import org.gradle.internal.hash.FileHasher
 import org.gradle.internal.hash.HashCode
 import spock.lang.Specification
 import spock.lang.Subject
 
-class ClassFilesAnalyzerTest extends Specification {
+class CompilationOutputsAnalyzerTest extends Specification {
 
     def classAnalyzer = Mock(ClassDependenciesAnalyzer)
     def accumulator = Mock(ClassDependentsAccumulator)
     def fileHasher = Mock(FileHasher)
-    @Subject analyzer = new ClassFilesAnalyzer(classAnalyzer, fileHasher, accumulator)
+    @Subject analyzer = new CompilationOutputsAnalyzer(classAnalyzer, fileHasher, accumulator)
 
     def "does not visit dirs"() {
         when: analyzer.visitDir(null)

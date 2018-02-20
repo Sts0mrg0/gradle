@@ -25,7 +25,7 @@ public class RecompilationSpec {
     private final Collection<String> classesToCompile = new NormalizingClassNamesSet();
     private String fullRebuildCause;
 
-    public Collection<String> getClassNames() {
+    public Collection<String> getClassesToCompile() {
         return classesToCompile;
     }
 

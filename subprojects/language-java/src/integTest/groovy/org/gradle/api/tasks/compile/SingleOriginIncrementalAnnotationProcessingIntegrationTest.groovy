@@ -28,10 +28,10 @@ class SingleOriginIncrementalAnnotationProcessingIntegrationTest extends Abstrac
         withProcessor(new HelperProcessorFixture())
     }
 
-    def "all sources are recompiled when any class changes"() {
+    def "generated files are recompiled when annotated file changes"() {
         given:
         def a = java "@Helper class A {}"
-        java "class B {}"
+        java "class Unrelated {}"
 
         outputs.snapshot { run "compileJava" }
 
@@ -40,21 +40,56 @@ class SingleOriginIncrementalAnnotationProcessingIntegrationTest extends Abstrac
         run "compileJava"
 
         then:
-        outputs.recompiledClasses("A", "AHelper", "B")
+        outputs.recompiledClasses("A", "AHelper")
     }
 
-    def "the user is informed about non-incremental processors"() {
+    def "annotated files are not recompiled on unrelated changes"() {
         given:
-        def a = java "@Helper class A {}"
-        run "compileJava"
+        java "@Helper class A {}"
+        def unrelated = java "class Unrelated {}"
+
+        outputs.snapshot { run "compileJava" }
 
         when:
-        a.text = "@Helper class A { public void foo() {} }"
-        run "compileJava", "--info"
+        unrelated.text = "class Unrelated { public void foo() {} }"
+        run "compileJava"
 
         then:
-        output.contains("The following annotation processors don't support incremental compilation:")
-        output.contains("Processor (type: SINGLE_ORIGIN)")
+        outputs.recompiledClasses("Unrelated")
+    }
+
+    def "classes files of generated sources are deleted when annotated file is deleted"() {
+        given:
+        def a = java "@Helper class A {}"
+        java "class Unrelated {}"
+
+        outputs.snapshot { run "compileJava" }
+
+        when:
+        a.delete()
+        run "compileJava"
+
+        then:
+        outputs.deletedClasses("A", "AHelper")
+    }
+
+    def "generated files are deleted when annotated file is deleted"() {
+        given:
+        def a = java "@Helper class A {}"
+        java "class Unrelated {}"
+
+        when:
+        outputs.snapshot { run "compileJava" }
+
+        then:
+        file("build/classes/java/main/AHelper.java").exists()
+
+        when:
+        a.delete()
+        run "compileJava"
+
+        then:
+        !file("build/classes/java/main/AHelper.java").exists()
     }
 
     def "processors must provide an originating element for each source element"() {
