@@ -16,6 +16,7 @@
 
 package org.gradle.nativeplatform.fixtures.msvcpp;
 
+import org.gradle.nativeplatform.fixtures.AvailableToolChains;
 import org.gradle.nativeplatform.toolchain.internal.msvcpp.version.VswhereVersionLocator;
 import org.gradle.test.fixtures.file.TestFile;
 
@@ -28,7 +29,12 @@ public class MSBuildVersionLocator {
         this.vswhereLocator = vswhereLocator;
     }
 
-    public File getMSBuildInstall() {
+    public File getMSBuildInstall(AvailableToolChains.InstalledToolChain toolChain) {
+        if (toolChain instanceof AvailableToolChains.InstalledVisualCpp) {
+            AvailableToolChains.InstalledVisualCpp visualCpp = (AvailableToolChains.InstalledVisualCpp) toolChain;
+            return new File("C:/Program Files (x86)/MSBuild/" + visualCpp.getVersion().getMajor() + ".0/Bin/MSBuild.exe");
+        }
+
         File vswhere = vswhereLocator.getVswhereInstall();
         if (vswhere == null) {
             throw new IllegalStateException("vswhere tool is required to be installed");
